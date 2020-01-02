@@ -1,0 +1,338 @@
+<html>
+    <canvas width="800" height="800" id="myCanvas"> </canvas>
+    <script>
+        
+        var g_Canvas = document.getElementById("myCanvas");
+        var g_Context = g_Canvas.getContext("2d");
+        
+        var g_Row = 4;
+        var g_Column = 4;
+        var g_ShuffledTextArray     = ["B","E","D","H","A","F","G","K","J","L","N","C","I","","M","O"];
+        var g_TextArray             = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O",""];
+        var g_Click_Index = 0 ;
+        var g_EmptyTileIndex = 13;
+        var g_ClientX ;
+        var g_ClientY ;
+        var g_TileSize = 120 ;
+        var g_MouseTimeClick = 0;
+        var g_MoveCount = 0;
+        var g_gameOver = false;
+        
+        
+        function C_Tile(l_X,l_Y,l_size,l_letter)
+        {
+            this.Xpos = l_X;
+            this.Ypos = l_Y;
+            this.size = l_size;
+            this.letter = l_letter;
+            this.LetterXpos = this.Xpos+(this.size/2 - 15);
+            this.LetterYpos = this.Ypos+(this.size/2 + 11);
+            this.TextFont = "35px Arial";
+            
+            
+            this.m_draw = function m_draw(l_ctx)
+            {
+            
+                l_ctx.fillStyle = "black";
+                l_ctx.fillRect(this.Xpos,this.Ypos,this.size,this.size);
+                
+                l_ctx.strokeStyle = "skyblue";
+                l_ctx.strokeRect(this.Xpos,this.Ypos,this.size,this.size);
+                
+                
+                l_ctx.font =  this.TextFont;
+                l_ctx.fillStyle = "orange";
+                l_ctx.fillText(this.letter,this.LetterXpos,this.LetterYpos);
+            }
+            
+            
+        }
+        
+        
+        function f_CreateGrid()
+        {
+           
+            var l_Xpos = 160;
+            var l_ypos = 220;
+            
+            for( var i = 0 ; i < g_Row*g_Column ; i++)
+            {
+                 g_TileObjectArray[i] =  new C_Tile(l_Xpos,l_ypos,g_TileSize,g_ShuffledTextArray[i]);
+                   
+                l_Xpos = l_Xpos+g_TileSize;
+                if((i+1) % g_Column == 0 )
+                    {
+                        l_ypos = l_ypos+g_TileSize;
+                        l_Xpos = 160;
+                    }
+                
+                
+                
+                    
+                }
+                
+            }
+        
+        function f_DrawGrid(l_Ctx)
+        {
+            for(var j=0; j<g_TileObjectArray.length ; j++)
+                {
+                    g_TileObjectArray[j].m_draw(g_Context);
+                }
+        }
+
+        
+        
+        var g_TileObjectArray =  new Array (g_Column*g_Row);
+        
+        
+       
+        
+        
+        
+        function f_ClearCanvas(l_ctx)
+        {
+            g_Context.clearRect(0,0,g_Canvas.width,g_Canvas.height);
+            g_Context.fillStyle = "skyblue";
+            g_Context.fillRect(0,0,g_Canvas.width,g_Canvas.height);
+        }
+        
+            
+
+     
+        
+        var g_MouseClick = 0;
+        var g_NeighbouringNodeIndex = new Array(4);
+        
+                                  
+        function f_mouseDown(e)
+        {
+     
+            g_ClientX = e.clientX;
+            g_ClientY = e.clientY;
+            g_MouseClick = 1 ;
+
+           
+          
+        }
+        
+        function f_ManageClick()
+        {
+           if(g_MouseClick == 1)
+                {
+            
+                    for(var j=0 ; j<g_Column*g_Row; j++)
+                    {
+                        if(g_ClientX>=g_TileObjectArray[j].Xpos && 
+                           g_ClientX <= (g_TileObjectArray[j].Xpos+g_TileSize) &&
+                           g_ClientY >= g_TileObjectArray[j].Ypos && 
+                           g_ClientY <= (g_TileObjectArray[j].Ypos+g_TileSize))
+                            { 
+
+                                g_MouseTimeClick = 1;
+                                g_Click_Index = j;
+                                g_NeighbouringNodeIndex[0] =     g_Click_Index -1;         
+                                g_NeighbouringNodeIndex[1] =     g_Click_Index +1;
+                                g_NeighbouringNodeIndex[2] =     g_Click_Index -g_Column;
+                                g_NeighbouringNodeIndex[3] =     g_Click_Index +g_Column;
+
+ 
+                                for(var i =0; i<g_NeighbouringNodeIndex.length; i++)
+                                {
+                                    if(g_NeighbouringNodeIndex[i] < 0)
+                                        {
+                                            g_NeighbouringNodeIndex[i] = -1;
+                                        }
+                                    else if(g_NeighbouringNodeIndex[i] > (g_TileObjectArray.length-1))
+                                        {
+                                            g_NeighbouringNodeIndex[i] = -1;
+                                        }
+
+
+                                }
+
+                                if(g_Click_Index % g_Column == 0 )
+                                    {
+                                        g_NeighbouringNodeIndex[0] = -1;
+                                    }
+
+                                if((g_Click_Index+1) % g_Column == 0 )
+                                    {
+                                        g_NeighbouringNodeIndex[1] = -1;
+                                    }
+                           
+                            console.log(g_Click_Index);
+                            console.log(g_NeighbouringNodeIndex);
+                            
+                            f_SwapingTile();
+                            g_MouseClick = 0;
+                            f_GameEnd();
+                            g_ShuffledCount = 0;    
+                            return;
+                            } 
+
+                    }
+                    
+                    g_MouseClick = 0;
+                
+                }
+         
+        }
+        
+        
+        function f_SwapingTile()
+        {
+            for(var i =0;i<g_NeighbouringNodeIndex.length;i++)
+            {
+                if(g_NeighbouringNodeIndex[i] >= 0)
+                {
+                    if(g_NeighbouringNodeIndex[i] == g_EmptyTileIndex)
+                    {
+                        var l_TempText = g_TileObjectArray[g_Click_Index].letter;
+                        g_TileObjectArray[g_Click_Index].letter = "";
+                        g_TileObjectArray[g_EmptyTileIndex].letter = l_TempText;
+                        
+                        g_EmptyTileIndex = g_Click_Index;
+                        g_MoveCount++;
+                        return;
+                    }
+                }
+            }
+        }
+        
+        function f_DrawHeading(l_Ctx)
+        {
+            l_Ctx.font = "45px Century Bold";
+            l_Ctx.fillStyle = "Black";
+            l_Ctx.fillText("Tile Game",300,80);
+        }
+        
+        
+        
+        function f_DrawMoveCount(l_Ctx)
+        {
+            l_Ctx.font = "28px Arial";
+            l_Ctx.fillStyle = "white";
+            l_Ctx.fillText("Move Count :",60,170);
+            l_Ctx.fillText(g_MoveCount,250,170);
+        }
+        
+        
+        
+        
+        function f_DrawTimeTaken(l_Ctx)
+        {
+            l_Ctx.font = "28px Arial";
+            l_Ctx.fillStyle = "white";
+            l_Ctx.fillText("Time Taken :",500,170);
+            if(g_Minute==0)
+            {  
+                l_Ctx.fillText(g_Minute,700,170);
+              
+            }
+            
+            l_Ctx.fillText(g_Minute,680,170);
+            l_Ctx.fillText(":",720,170);
+            
+            if(g_Sec==0)        
+            {
+                l_Ctx.fillText(g_Sec,758,170);
+            }
+            l_Ctx.fillText(g_Sec,738,170);
+        }
+        
+        
+        
+        var g_ShuffledCount = 0;
+        function f_GameEnd()
+        {
+            for( var i= 0 ; i < g_TileObjectArray.length ; i++)
+                {
+                    if(g_TileObjectArray[i].letter == g_TextArray[i])
+                        {
+                            g_ShuffledCount ++;
+                        }
+                    
+                    if(g_ShuffledCount == (g_Column*g_Row)-1)
+                        {
+                            g_gameOver = true;
+//                            alert("Game Over");
+                        }
+                }
+        }
+        
+        
+            
+            
+        function f_GameLoop()
+        {
+            f_ManageClick();
+            f_ManageTime();
+            f_ClearCanvas();
+           
+            f_DrawGrid();
+            f_DrawTimeTaken(g_Context);
+            f_DrawMoveCount(g_Context);
+            f_DrawHeading(g_Context);
+            f_gameOver();
+            
+        }
+        
+        
+        function f_ManageTime()
+            {
+                if(g_MouseTimeClick == 1)
+                {
+                    g_FrameCounter++;
+                
+                if(g_FrameCounter % g_FPS ==0)
+                   {
+                       g_FrameCounter = 0;
+                       g_Sec++;
+                       if(g_Sec < 10)
+                           {
+                               g_Sec = "0" + g_Sec;
+                           }
+                       if(g_Sec==60)
+                           {
+                               
+                               g_Minute++;
+                               if(g_Minute < 10 )
+                                   {
+                                       g_Minute = "0" + g_Minute;
+                                   }
+                               g_Sec=0;
+                               
+                           }
+                   } 
+            }
+                
+            }
+        
+        function f_gameOver()
+        {
+            if(g_gameOver == true)
+                {
+                    g_Context.clearRect(0,0,g_Canvas.width,g_Canvas.height);
+                    g_Context.fillStyle = "black";
+                    g_Context.fillRect(0,0,g_Canvas.width,g_Canvas.height);
+                    
+                    g_Context.fillStyle = "white";
+                    g_Context.fillText("Game Over !!" , (g_Canvas.width/2)-150 , (g_Canvas.height/2));
+                    
+                }
+        }
+        
+        var g_Sec = 0;
+        var g_Minute = 0;
+        var g_FrameCounter = 0;
+        var g_FPS = 30;
+        var g_TimeInterval = 1000/g_FPS;
+        f_CreateGrid();
+        setInterval(f_GameLoop,g_TimeInterval);
+        document.addEventListener("mousedown",f_mouseDown)
+        console.log(g_TileObjectArray);
+        
+    </script>
+
+</html>
