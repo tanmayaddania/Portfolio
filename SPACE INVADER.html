@@ -1,0 +1,1454 @@
+<html>
+<body>
+<canvas id="myCanvas" height="750" width="650"></canvas>
+</body>
+<script>
+
+//----------------------CANVAS ELEMENTS AND GLOBAL VARIABLES-----------------------
+var g_Canvas=document.getElementById("myCanvas");
+var g_ctx=g_Canvas.getContext("2d");
+var g_Width_Of_Pixel=3;
+var g_Aliens=[];
+var g_Alien_Set_Array=new Array(3);
+var g_Aliens_On_Border=new Array(14);    
+var g_Aliens_At_Edge=false;    
+var g_Key_Pressed=new Array(3);     
+var g_counter=0;
+var g_Framerate=1000/30;
+var g_Alien_Speed=.5*g_Framerate                   
+var g_xPos=10;                             
+var g_yPos=100;                            
+var g_Alien_Move_Speed=10;                    
+var g_Alien_Gap=10;                         
+var g_Current_Direction_Of_Alien="r";             
+var g_Next_Direction_Of_Alien="l";             
+var g_Speed_Of_Mothership=2;
+var g_Mothership_Active_Boolean=true;
+var g_Bunker_Array=new Array(8);
+var g_currentEnemyWS;
+var g_Respawn_Time=1*g_Framerate;
+var g_Respawn_Timer=g_Respawn_Time;
+var g_Spaceship_Destroyed=false;
+var g_Spaceship_Lives=3;
+var g_Score=0
+var g_Game_Over_Boolean=false;
+    
+var g_Alien_Type_1_Bitmap_1=[0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,0 ,1 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,1 ,0 ,1 ,1 ,0 ,1 ,0 ,0 ,
+                             0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,
+                             0 ,0 ,1 ,1 ,0 ,0 ,1 ,1 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,1 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ];
+    
+var g_Alien_Type_1_Bitmap_2=[0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,1 ,0 ,1 ,1 ,0 ,1 ,0 ,0 ,
+                             0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,
+                             0 ,0 ,1 ,1 ,0 ,0 ,1 ,1 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ];
+
+var g_Alien_Type_2_Bitmap_1=[0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,1 ,0 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ,
+                             0 ,0 ,1 ,0 ,1 ,1 ,0 ,1 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,
+                             0 ,0 ,1 ,1 ,0 ,0 ,1 ,1 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,1 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,
+                             0 ,1 ,0 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ];
+    
+var g_Alien_Type_2_Bitmap_2=[0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,0 ,1 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,
+                             0 ,0 ,1 ,0 ,1 ,1 ,0 ,1 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,
+                             0 ,0 ,1 ,1 ,0 ,0 ,1 ,1 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ];
+    
+var g_Alien_Type_3_Bitmap_1=[0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,0 ,1 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,
+                             0 ,1 ,1 ,1 ,0 ,0 ,1 ,1 ,1 ,0 ,
+                             0 ,1 ,0 ,1 ,1 ,1 ,1 ,0 ,1 ,0 ,
+                             0 ,0 ,1 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ];
+    
+var g_Alien_Type_3_Bitmap_2=[0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,0 ,0 ,
+                             0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,
+                             0 ,1 ,1 ,1 ,0 ,0 ,1 ,1 ,1 ,0 ,
+                             0 ,1 ,0 ,1 ,1 ,1 ,1 ,0 ,1 ,0 ,
+                             0 ,0 ,1 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,
+                             0 ,1 ,0 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ,
+                             0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ];
+    
+var g_Player_Spaceship_Bitmap_1=[1 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,1 ,
+                                 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                                 1 ,0 ,0 ,0 ,1 ,1 ,1 ,0 ,0 ,0 ,1 ,
+                                 1 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,1 ,
+                                 1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,
+                                 1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,
+                                 1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,
+                                 1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,
+                                 0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,
+                                 0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,
+                                 1 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,0 ,0 ,1 ];
+
+var g_Player_Spaceship_Bitmap_2=[1 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,1 ,
+                                 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                                 1 ,0 ,0 ,0 ,1 ,1 ,1 ,0 ,0 ,0 ,1 ,
+                                 1 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,1 ,
+                                 1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,
+                                 1 ,1 ,1 ,1 ,1 ,0 ,1 ,1 ,1 ,1 ,1 ,
+                                 1 ,1 ,1 ,1 ,1 ,0 ,1 ,1 ,1 ,1 ,1 ,
+                                 1 ,1 ,1 ,1 ,1 ,0 ,1 ,1 ,1 ,1 ,1 ,
+                                 0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,
+                                 0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,
+                                 1 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,0 ,0 ,1 ];
+    
+var g_Mothership_Bitmap_1=[1 ,1 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,1 ,1 ,
+                           0 ,1 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ,
+                           0 ,1 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ,
+                           0 ,1 ,0 ,1 ,1 ,1 ,1 ,1 ,0 ,1 ,0 ,
+                           0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,
+                           0 ,1 ,0 ,1 ,0 ,1 ,0 ,1 ,0 ,1 ,0 ,
+                           1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,
+                           0 ,1 ,1 ,0 ,0 ,0 ,0 ,0 ,1 ,1 ,0 ,
+                           0 ,0 ,1 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,
+                           0 ,0 ,1 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,
+                           0 ,0 ,1 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ];
+    
+var g_Mothership_Bitmap_2=[0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                           0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                           0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+                           0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,
+                           0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,
+                           0 ,1 ,0 ,1 ,0 ,1 ,0 ,1 ,0 ,1 ,0 ,
+                           1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,
+                           0 ,1 ,1 ,0 ,0 ,0 ,0 ,0 ,1 ,1 ,0 ,
+                           0 ,0 ,1 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,
+                           0 ,0 ,1 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,
+                           1 ,1 ,1 ,0 ,0 ,0 ,0 ,0 ,1 ,1 ,1 ];
+    
+var g_Bunker_Bitmap_Before_Damage=[[0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ],
+                                   [1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ],
+                                   [1 ,1 ,1 ,0 ,0 ,1 ,1 ,1 ,1 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ],
+                                   [1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,1 ,1 ,1 ,1 ,0 ,0 ,1 ,1 ,1 ],
+                                   [0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ],
+                                   [1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,1 ,1 ,1 ,0 ,0 ]];
+    
+var g_Bunker_Bitmap_After_Damage=[[0 ,0 ,0 ,1 ,0 ,0 ,1 ,1 ,1 ,0 ,1 ,1 ,0 ,1 ,1 ,0 ,0 ,1 ,1 ,0 ,1 ,1 ,0 ,1 ,0 ],
+                                  [1 ,0 ,1 ,0 ,1 ,1 ,1 ,0 ,1 ,1 ,0 ,1 ,0 ,1 ,0 ,1 ,0 ,0 ,0 ,1 ,1 ,0 ,1 ,0 ,1 ],
+                                  [0 ,1 ,1 ,0 ,0 ,1 ,0 ,1 ,0 ,0 ,0 ,1 ,0 ,1 ,1 ,0 ,1 ,0 ,1 ,0 ,1 ,0 ,1 ,1 ,0 ],
+                                  [1 ,0 ,1 ,1 ,0 ,0 ,0 ,1 ,0 ,1 ,1 ,1 ,0 ,1 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,1 ,0 ,1 ],
+                                  [1 ,1 ,0 ,1 ,1 ,0 ,1 ,0 ,1 ,0 ,1 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ],
+                                  [0 ,1 ,1 ,1 ,0 ,1 ,0 ,0 ,1 ,1 ,1 ,0 ,1 ,0 ,0 ,0 ,1 ,1 ,1 ,0 ,1 ,1 ,0 ,0 ,0 ]];
+    
+var g_Healthbar_Bitmap=[0 ,1 ,0 ,1 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,1 ,1 ,1 ,0 ,0 ,0 ,1 ,0 ,0 ];
+    
+    
+    
+//------------------------------------------------OBJECTS-------------------------------------------------------------------------------------------------
+    
+SPACESHIP_PLAYER=new C_SPACESHIP(g_Canvas.width/2-25,g_Canvas.height-60,11,11,"GREY",g_Player_Spaceship_Bitmap_1,g_Player_Spaceship_Bitmap_2,g_Width_Of_Pixel,g_ctx,5);
+    
+g_Aliens[0]=new C_ALIEN_TYPE(10,10,"ALIEN",g_Alien_Type_1_Bitmap_1,g_Alien_Type_1_Bitmap_2,"PURPLE",g_Width_Of_Pixel);
+g_Aliens[1]=new C_ALIEN_TYPE(10,10,"ALIEN",g_Alien_Type_2_Bitmap_1,g_Alien_Type_2_Bitmap_2,"BROWN",g_Width_Of_Pixel);
+g_Aliens[2]=new C_ALIEN_TYPE(10,10,"ALIEN",g_Alien_Type_3_Bitmap_1,g_Alien_Type_3_Bitmap_2,"ORANGE",g_Width_Of_Pixel);
+g_Aliens[3]=new C_ALIEN_TYPE(11,11,"motherShip",g_Mothership_Bitmap_1,g_Mothership_Bitmap_2,"PINK",g_Width_Of_Pixel,true);
+    
+ALIEN_SET_1=new C_ALIEN_SET(g_xPos,g_yPos,14,2,g_Aliens[0],g_ctx,g_Alien_Move_Speed,0);
+ALIEN_SET_2=new C_ALIEN_SET(g_xPos,g_yPos+2*g_Width_Of_Pixel*10+g_Alien_Gap*2,14,2,g_Aliens[1],g_ctx,g_Alien_Move_Speed,1);
+ALIEN_SET_3=new C_ALIEN_SET(g_xPos,g_yPos+4*g_Width_Of_Pixel*10+g_Alien_Gap*4,14,2,g_Aliens[2],g_ctx,g_Alien_Move_Speed,2);
+    
+ALIEN_ATTACK=new C_ALIEN_WEAPON_CLASS(g_Aliens_On_Border);
+    
+motherShip=new C_ALIEN_SET(g_xPos,g_yPos-40,1,1,g_Aliens[3],g_ctx,g_Speed_Of_Mothership);
+    
+healthBar= new C_HEALTH_BAR(g_Canvas.width-g_Canvas.width/8,10,5,5,"RED",g_Healthbar_Bitmap,g_Width_Of_Pixel,g_Spaceship_Lives,g_ctx);
+    
+scoreBoard=new C_SCOREBOARD(20,25,"yellow",g_ctx);
+    
+BORDER=new C_BORDER(0,40,1,"grey",g_Canvas,g_ctx);
+    
+border=new C_BORDER(0,g_Canvas.height-20,1,"black",g_Canvas,g_ctx);
+    
+f_fillObjects();
+
+//-------------------------------------INITIALIZE_ALL_OBJECTS-------------------------------------------------
+    
+f_initialiseObjects();
+    
+//----------------------------SETINTERVAL--------------------------------------------------------------------
+    setInterval(f_gameLoop,g_Framerate);
+    
+    
+//------------------------------------------GAMELOOP----------------------------------------------------------- 
+    
+function f_gameLoop()
+{
+   f_keyResponse(g_Key_Pressed);
+   f_Run_Game();
+}
+
+    
+    
+    
+//-------------------------------CANVAS_RELATED_DRAWING_AND_CLEAR---------------------------------
+function f_drawBorder()
+{
+g_ctx.save();
+g_ctx.fillStyle="black";
+g_ctx.fillRect(0,0,g_Canvas.width,g_Canvas.height);
+g_ctx.restore();
+}
+function f_clearCanvas(){g_ctx.clearRect(0,0,g_Canvas.width,g_Canvas.height);}
+    
+    
+    
+//------------------------------------------Class: Pixel-----------------------------------
+    
+function C_BORDER(l_x,l_y,l_thickness,l_colour,l_can,l_ctx)
+{
+    this.x=l_x;
+    this.y=l_y;
+    this.thickness=l_thickness;
+    this.width=l_can.width;
+    this.ctx=l_ctx;
+    this.m_Draw_Border=m_Draw_Border;
+    this.ctx=l_ctx; 
+    this.colour=l_colour;
+}
+function m_Draw_Border()
+    {
+    this.ctx.save();
+    this.ctx.fillStyle=this.colour;
+    this.ctx.shadowColor=this.colour;
+    this.ctx.shadowBlur=10;
+    this.ctx.fillRect(this.x,this.y,this.width,this.thickness);
+    this.ctx.restore();
+}
+    
+    
+    
+
+//-----------------------Class: Pixel-------------------------------
+function c_pixel(l_x,l_y,l_colour,l_width,l_ctx,l_glow)
+{
+    this.x=l_x;
+    this.y=l_y;
+    this.width=l_width;
+    this.isVisible=false;
+    this.colour=l_colour;
+    this.m_drawPixel=m_drawPixel;
+    this.glow=l_glow;
+    this.ctx=l_ctx;
+}
+
+    
+    
+    
+//---------------------------------PixelGrid-------------------------------------
+function c_pixelGrid(l_x,l_y,l_c,l_r,l_colour,l_bitmap1,l_bitmap2,l_pixelWidth,l_ctx,l_id,l_tag)
+{
+    this.x=l_x;
+    this.y=l_y;
+    this.colour=l_colour;
+    this.bitmap1=l_bitmap1;
+    this.bitmap2=l_bitmap2;
+    this.bitmapArr=l_bitmap1;
+    this.pixelArr=new Array(l_bitmap1.length);
+    this.m_initialiseGrid=m_initialiseGrid;
+    this.m_drawGrid=m_drawGrid;
+    this.m_animateGrid=m_animateGrid;
+    this.m_moveGrid=m_moveGrid;
+    this.coloumnCount=l_c;
+    this.rowCount=l_r;
+    this.pixWidth=l_pixelWidth;
+    this.currentPixel=0
+    this.ctx=l_ctx;
+    this.glow=false;
+    this.isAnimate=false;
+    this.isActive=true;
+    this.id=l_id;
+    this.animateTimer=33/4;
+    this.animateDelay=33/4;
+    this.tag=l_tag;
+    this.parentId="nill";
+}
+    
+function m_initialiseGrid()
+{
+    for(var i=0;i<this.rowCount;i++)
+    {
+        for(var j=0;j<this.coloumnCount;j++)
+        {
+          this.pixelArr[this.coloumnCount*i+j]=new c_pixel(this.x+j*this.pixWidth,this.y+i*this.pixWidth,this.colour,this.pixWidth,this.ctx,this.glow);
+        }
+    }
+   
+}
+function m_animateGrid()
+{
+    if(!this.isActive)      {return;}
+    if(this.isAnimate)      {this.bitmapArr=this.bitmap2;}
+    else                    {this.bitmapArr=this.bitmap1;}
+    if(this.animateTimer>0) {this.animateTimer--;}
+    else                    {this.isAnimate=!this.isAnimate;
+                            this.animateTimer=this.animateDelay;}
+}
+    
+function m_drawGrid()
+{
+    if(!this.isActive) {return;}
+    for(var i=0;i<this.pixelArr.length;i++)
+    {
+        if(this.bitmapArr[i]==1)
+        {    
+            this.pixelArr[i].isVisible=true;
+            this.pixelArr[i].m_drawPixel();
+        }
+        
+    }
+}
+    
+function m_moveGrid(l_x,l_y,l_smooth,l_speed)
+{
+    if(!this.isActive) {return;}
+   if(!l_smooth)
+   {
+    if(l_x!="nill")this.x=l_x;
+    if(l_y!="nill")this.y=l_y;
+    for(i=0;i<this.rowCount;i++)
+    {
+        for(j=0;j<this.coloumnCount;j++)
+        {
+          if(l_x!="nill")this.pixelArr[this.coloumnCount*i+j].x=this.x+j*this.pixWidth;
+          if(l_y!="nill")this.pixelArr[this.coloumnCount*i+j].y=this.y+i*this.pixWidth;
+        }
+    }
+   }
+   else
+   {
+        if(l_x>this.x)
+        {
+            this.x+=l_speed;
+            for(var i=0;i<this.pixelArr.length;i++) {this.pixelArr[i].x+=l_speed;}
+        }
+        else if(l_x<this.x)
+        {
+            this.x-=l_speed; 
+            for(var i=0;i<this.pixelArr.length;i++) {this.pixelArr[i].x-=l_speed;}
+        }
+       
+    }
+}
+    
+    
+    
+    
+//----------------------------------------------ENEMYSET--------------------------------------------
+function C_ALIEN_SET(l_x,l_y,l_c,l_r,l_type,l_ctx,l_speed,l_id)
+{
+    this.x=l_x;
+    this.crntX=l_x;
+    this.y=l_y;
+    this.id=l_id;
+    this.type=l_type;
+    this.coloumnCount=l_c;
+    this.crntColoumnCount=l_c;
+    this.rowCount=l_r;
+    this.crntRowCount=l_r;
+    this.enemyArr=new Array(l_c*l_r);
+    this.m_Draw_Aliens=m_Draw_Aliens;
+    this.m_animateEnemies=m_animateEnemies;
+    this.m_moveEnemie=m_moveEnemies;
+    this.m_Run_Aliens=m_Run_Alienss;
+    this.m_initialiseEnemies=m_initialiseEnemies;
+    this.ctx=l_ctx;
+    this.speed=l_speed;
+    this.isTopRow=false;
+    this.moveRight=false;
+    this.moveLeft=false;
+    this.moveDown=false;
+    this.isActive=true;
+    this.gapEnemy=10
+    this.tag="";
+    
+}
+
+function m_initialiseEnemies()
+{
+    for(var i=0;i<this.rowCount;i++)
+    {
+        for(var j=0;j<this.coloumnCount;j++)
+        {
+            this.enemyArr[this.coloumnCount*i+j]=new c_pixelGrid(this.gapEnemy*j+this.x+j*this.type.coloumnCount*this.type.pixWidth,this.y+i*this.type.rowCount*this.type.pixWidth+this.gapEnemy*i,this.type.coloumnCount,this.type.rowCount,this.type.colour,this.type.bitmap1,this.type.bitmap2,this.type.pixWidth,this.ctx,this.coloumnCount*i+j);
+            this.enemyArr[this.coloumnCount*i+j].m_initialiseGrid();
+            this.enemyArr[this.coloumnCount*i+j].parentId=this.id;
+            this.enemyArr[this.coloumnCount*i+j].tag="aliens";
+        }
+    }
+
+}
+    
+function m_Draw_Aliens()
+{
+    for(var i=0;i<this.enemyArr.length;i++)
+    {
+      this.enemyArr[i].m_drawGrid();
+    }
+    
+}
+function m_Run_Alienss()
+{
+    this.m_animateEnemies();
+    this.m_moveEnemie();
+    if(this.isTopRow&&this.crntColoumnCount>0&&!this.enemyArr[this.crntColoumnCount-1].isActive)
+    {
+        this.crntColoumnCount--;
+    }
+    if(this.isTopRow&&this.crntColoumnCount>0)
+    {
+        for(i=0;i<this.coloumnCount;i++)
+        {
+           if(this.enemyArr[i].isActive)
+           {
+                this.crntX=this.enemyArr[i].x;
+                break;
+            }
+        }
+    }
+    
+}
+    
+function m_animateEnemies()
+{
+    for(var i=0;i<this.enemyArr.length;i++)
+    {
+      this.enemyArr[i].m_animateGrid();
+    }
+    
+}
+    
+function m_moveEnemies()
+{
+    if(this.moveRight)
+    {
+        this.x+=this.speed
+        for(var i=0;i<this.rowCount;i++)
+        {
+        for(var j=0;j<this.coloumnCount;j++)
+        {
+        this.enemyArr[i*this.coloumnCount+j].m_moveGrid(this.x+(j)*this.type.coloumnCount*this.type.pixWidth+j*this.gapEnemy,"nill")
+        }
+    }        
+        this.moveRight=false;
+    }
+    if(this.moveLeft)
+    {
+        this.x-=this.speed;
+        for(var i=0;i<this.rowCount;i++)
+        {
+        for(var j=0;j<this.coloumnCount;j++)
+        {
+        this.enemyArr[i*this.coloumnCount+j].m_moveGrid(this.x+(j)*this.type.coloumnCount*this.type.pixWidth+j*this.gapEnemy,"nill")
+        }
+    }        
+     this.moveLeft=false;
+    }
+    if(this.moveDown)
+    {
+        this.y+=this.type.pixWidth*this.type.rowCount;
+        for(var i=0;i<this.rowCount;i++)
+        {
+        for(var j=0;j<this.coloumnCount;j++)
+        {
+        this.enemyArr[i*this.coloumnCount+j].m_moveGrid("nill",this.y+(this.type.rowCount*this.type.pixWidth+this.gapEnemy)*i);
+        }
+    }     
+        this.moveDown=false;
+    }
+}
+    
+    
+    
+//----------------------------------------SPACESHIP------------------------------------------------------------
+function C_SPACESHIP(l_x,l_y,l_c,l_r,l_colour,l_bitmap,l_bitmap2,l_pixelWidth,l_ctx,l_speed)
+{
+    this.x=l_x;
+    this.spawnX=l_x;
+    this.y=l_y;
+    this.isActive=true;
+    this.colour=l_colour;
+    this.coloumnCount=l_c;
+    this.rowCount=l_r;
+    this.bitmap=l_bitmap;
+    this.bitmap2=l_bitmap2;
+    this.pixWidth=l_pixelWidth;
+    this.ctx=l_ctx;
+    this.pixelGrid=new c_pixelGrid(this.x,this.y,this.coloumnCount,this.rowCount,this.colour,this.bitmap,this.bitmap2,this.pixWidth,this.ctx);
+    this.BulletArr=new Array(10);
+    this.bulletBitmap=[1,1,1]
+    this.m_drawShip=m_drawShip;
+    this.m_initialiseShip=m_initialiseShip;
+    this.m_Run_Spaceship=m_Run_Spaceship;
+    this.m_moveShip=m_moveShip;
+    this.m_fireShip=m_fireShip;
+    this.m_shipAnimation=m_shipAnimation;
+    this.m_bulletManager=m_bulletManager;
+    this.moveRight=false;
+    this.moveLeft=false;
+    this.fire=false;
+    this.isFiring=false;
+    this.fireDelay=5;
+    this.fireTimer=this.fireDelay;
+    this.speed=l_speed;
+    this.bulletOffset=(this.coloumnCount*this.pixWidth)/2
+    this.tag="player";
+}
+
+function m_initialiseShip()
+{
+    this.pixelGrid.m_initialiseGrid();
+    for(var i=0;i<this.BulletArr.length;i++)
+    {
+        this.BulletArr[i]=new c_bullet(this.x,this.y,"white",this.bulletBitmap,this.pixWidth,this.ctx)
+        this.BulletArr[i].m_initialiseBullet();
+    }
+} 
+function m_fireShip()
+{
+    if(!this.isActive) {return;}
+    if(this.fireTimer>=0)
+    {
+        this.isFiring=true
+        this.fireTimer--;
+        this.fire=false;
+    }
+    else
+    {
+        this.isFiring=false;
+    }
+    
+    if(this.fire&&this.fireTimer<=0)
+    {
+        for(var i=0;i<this.BulletArr.length;i++)
+        {
+            if(!this.BulletArr[i].isActive)
+            {
+                this.BulletArr[i].isActive=true;
+                this.BulletArr[i].x=this.x+this.bulletOffset
+                this.BulletArr[i].y=this.y
+                this.BulletArr[i].pixelGrid.m_moveGrid(this.x+this.bulletOffset,"nill");
+                this.fire=false; 
+                break;
+            }
+        }
+        this.fireTimer=this.fireDelay;
+    }
+}
+    
+function m_bulletManager()
+{
+    if(!this.isActive) {return;}
+    
+    for(i=0;i<this.BulletArr.length;i++)
+    {
+        if(this.BulletArr[i].isActive)
+        {
+            if(this.BulletArr[i].y<0)
+            {
+              this.BulletArr[i].isActive=false;
+            }
+            this.BulletArr[i].m_runBullet()
+        }
+    }
+}
+function m_shipAnimation()
+{
+    if(this.isFiring)
+    {
+    this.pixelGrid.bitmap1=this.bitmap2;
+    this.pixelGrid.bitmapArr=this.bitmap2; 
+    }
+    else
+    {
+      this.pixelGrid.bitmap1=this.bitmap ;  
+      this.pixelGrid.bitmapArr=this.bitmap ;  
+    }
+}
+function m_Run_Spaceship()
+{
+    if(!this.isActive) {return;}
+    
+    this.m_fireShip();
+    this.m_bulletManager();
+    this.m_shipAnimation();
+    
+    if(this.moveLeft)
+    {
+        this.m_moveShip(-this.speed);
+        this.moveLeft=false;
+    }
+    if(this.moveRight)
+    {
+        this.m_moveShip(this.speed);
+        this.moveRight=false;
+    }
+}
+    
+function m_drawShip()
+{
+    if(!this.isActive) {return;}
+    
+    this.pixelGrid.m_drawGrid();
+    for(var i=0;i<this.BulletArr.length;i++)
+    {
+        this.BulletArr[i].m_drawBullet();
+    }
+}
+function m_moveShip(l_d)
+    {
+    if(!this.isActive) {return;}
+    this.x+=l_d;
+    this.pixelGrid.m_moveGrid(this.x,this.y,true,5);
+}
+    
+    
+    
+    
+//--------------------------------------BULLET-------------------------------------------------------
+function c_bullet(l_x,l_y,l_colour,l_bitmap,l_pixelWidth,l_ctx)
+{
+    this.x=l_x;
+    this.y=l_y;
+    this.colour=l_colour;
+    this.coloumnCount=1;
+    this.rowCount=3;
+    this.bitmap=[1,1,1];
+    this.pixWidth=l_pixelWidth;
+    this.ctx=l_ctx;
+    this.BulletSpeed=15;
+    this.pixelGrid=new c_pixelGrid(this.x,this.y,this.coloumnCount,this.rowCount,this.colour,this.bitmap,this.bitmap,this.pixWidth,this.ctx,0,"bullet");
+    this.isActive=false;
+    this.m_drawBullet=m_drawBullet;
+    this.m_initialiseBullet=m_initialiseBullet;
+    this.m_runBullet=m_runBullet;
+    this.m_moveBullet=m_moveBullet;
+    this.tag="bullet";
+}
+
+function m_initialiseBullet()
+{
+    this.pixelGrid.m_initialiseGrid();
+}
+function m_drawBullet()
+{
+    if(this.isActive)
+    {
+      this.pixelGrid.m_drawGrid();
+    }
+}
+    
+function m_runBullet()
+    {
+    if(this.isActive)
+    {
+      this.m_moveBullet();
+    }
+}
+    
+function m_moveBullet()
+{
+    this.y-=this.BulletSpeed;
+    this.pixelGrid.m_moveGrid("nill",this.y);
+}
+    
+    
+    
+    
+//-------------------------------------BUNKER----------------------------------------------------------
+function c_bunker(l_x,l_y,l_c,l_r,l_colour,l_bitmap,l_bitmapdestroyed,l_pixelWidth,l_ctx,l_id)
+{
+    this.x=l_x;
+    this.y=l_y;
+    this.id=l_id;
+    this.colour=l_colour;
+    this.coloumnCount=3
+    this.rowCount=2
+    this.bitmap=l_bitmap;
+    this.bitmapDestroyed=l_bitmapdestroyed;
+    this.pixWidth=l_pixelWidth;
+    this.ctx=l_ctx;
+    this.blockSize=l_c;
+    this.pixelArr=new Array(l_bitmap.length);
+    this.m_drawBunker=m_drawBunker;
+    this.m_initialiseBunker=m_initialiseBunker;
+    this.tag="bunker";
+    this.isDamaged=new Array(6);
+    this.m_destroyBunker=m_destroyBunker;
+}
+
+function m_initialiseBunker()
+{
+    for(var i=0;i<this.rowCount;i++)
+    {
+        for(var j=0;j<this.coloumnCount;j++)
+        {
+            this.pixelArr[i*this.coloumnCount+j]=new c_pixelGrid(this.x+j*this.blockSize*this.pixWidth,this.y+i*this.blockSize*this.pixWidth,this.blockSize,this.blockSize,this.colour,this.bitmap[i*this.coloumnCount+j],this.bitmap[i*this.coloumnCount+j],this.pixWidth,this.ctx);
+            this.pixelArr[i*this.coloumnCount+j].m_initialiseGrid();
+            this.pixelArr[i*this.coloumnCount+j].tag=this.tag;
+            this.pixelArr[i*this.coloumnCount+j].id=i*this.coloumnCount+j;
+            this.pixelArr[i*this.coloumnCount+j].parentId=this.id;
+        }
+    }
+}
+    
+function m_drawBunker()
+{
+    for(var i=0;i<this.rowCount;i++)
+    {
+        for(var j=0;j<this.coloumnCount;j++)
+        {
+            this.pixelArr[i*this.coloumnCount+j].m_drawGrid();
+        }
+    }
+}
+    
+function m_destroyBunker(l_id)
+{
+    if(!this.isDamaged[l_id])
+    {
+        this.isDamaged[l_id]=true;
+         this.pixelArr[l_id].bitmap1=this.bitmapDestroyed[l_id];
+         this.pixelArr[l_id].bitmapArr =this.bitmapDestroyed[l_id];
+        
+    }
+    else
+    {
+        this.pixelArr[l_id].isActive=false;
+    }
+}
+    
+    
+    
+//-----------------------------------------------------KEY RESPONSE FUNCTONS------------------------------------------
+    
+function f_keyResponse(l_inputArr)
+{
+    if(l_inputArr[0])
+    {
+        SPACESHIP_PLAYER.moveLeft=true;
+    }  
+    if(l_inputArr[1])
+    {
+        SPACESHIP_PLAYER.moveRight=true;
+    }
+    if(l_inputArr[2])
+    {
+       SPACESHIP_PLAYER.fire=true;
+    }
+}
+    
+    
+    
+//------------------------------------ALIEN ATTACK------------------------------------------------------------------------
+    
+function C_ALIEN_WEAPON_CLASS(l_enemyArr)
+{
+    this.enemyArr=l_enemyArr;
+    this.bulletArr=new Array(6);
+    this.m_initialiseWeaponSystem=m_initialiseWeaponSystem;
+    this.m_Run_Weapons=m_Run_Weapons;
+    this.m_fireWeaponSystem=m_fireWeaponSystem;
+    this.m_bulletManagerWS=m_bulletManagerWS;
+    this.timerMaxDelay=30;
+    this.timerMinDelay=15;
+    this.timer=Math.floor(Math.random()*(this.timerMaxDelay-this.timerMinDelay)+this.timerMinDelay);
+}
+    
+function m_initialiseWeaponSystem()
+{
+    for(var i=0;i<this.bulletArr.length;i++)
+    {
+        this.bulletArr[i]=new c_bullet(100,100,"green",[1,1,1],g_Width_Of_Pixel,g_ctx);
+        this.bulletArr[i].m_initialiseBullet();
+        this.bulletArr[i].BulletSpeed*=-1;
+    }
+}
+    
+function m_Run_Weapons()
+{
+    if(this.timer<=0)
+    {
+        this.m_fireWeaponSystem();
+        this.timer=Math.floor(Math.random()*(this.timerMaxDelay-this.timerMinDelay)+this.timerMinDelay);
+    }
+    else
+    {
+        this.timer--;
+    }
+    this.m_bulletManagerWS();
+}
+    
+function m_fireWeaponSystem()
+{
+    var l_bulletOffset=this.enemyArr[0].pixWidth*this.enemyArr[0].coloumnCount/2
+    g_currentEnemyWS=Math.floor(Math.random()*this.enemyArr.length);
+    if(!this.enemyArr[g_currentEnemyWS].isActive)
+    {
+        return;
+    }
+    for(i=0;i<this.bulletArr.length;i++)
+    {
+        if(!this.bulletArr[i].isActive)
+        {
+                this.bulletArr[i].x=this.enemyArr[g_currentEnemyWS].x+l_bulletOffset;
+                this.bulletArr[i].y=this.enemyArr[g_currentEnemyWS].y+this.enemyArr[0].rowCount*this.enemyArr[0].pixWidth;
+                this.bulletArr[i].y=this.enemyArr[g_currentEnemyWS].y+this.enemyArr[0].rowCount*this.enemyArr[0].pixWidth;
+                this.bulletArr[i].pixelGrid.m_moveGrid(this.bulletArr[i].x,this.bulletArr[i].y);
+                this.bulletArr[i].isActive=true;
+                break;
+        }
+    }
+}
+    
+function m_bulletManagerWS()
+{
+    for(i=0;i<this.bulletArr.length;i++)
+    {
+        if(this.bulletArr[i].isActive)
+        {
+            if(this.bulletArr[i].y>g_Canvas.height)
+            {
+                this.bulletArr[i].isActive=false;
+            }
+            this.bulletArr[i].m_runBullet()
+           
+        }
+    }
+}
+    
+    
+    
+//-------------------------------------------HEALTHBAR------------------------------------------------
+    
+function C_HEALTH_BAR(l_x,l_y,l_c,l_r,l_colour,l_bitmap,l_pixelWidth,l_health,l_ctx)
+{
+    this.x=l_x;
+    this.y=l_y;
+    this.colour=l_colour;
+    this.coloumnCount=l_c
+    this.rowCount=l_r
+    this.bitmap=l_bitmap;
+    this.pixelArr=new Array(l_health);
+    this.pixWidth=l_pixelWidth;
+    this.ctx=l_ctx;
+    this.health=l_health;
+    this.healthMax=l_health;
+    this.fillGap=4;
+    this.m_Draw_Health=m_Draw_Health;
+    this.m_updateHealth=m_updateHealth;
+    this.m_initialiseHealth=m_initialiseHealth;
+}
+
+function m_initialiseHealth()
+{
+    for(var i=0;i<this.health;i++)
+    {
+        this.pixelArr[i]=new c_pixelGrid(this.x+i*(this.coloumnCount*this.pixWidth+this.fillGap),this.y,this.coloumnCount,this.rowCount,this.colour,this.bitmap,this.bitmap,this.pixWidth,this.ctx)
+        this.pixelArr[i].m_initialiseGrid();
+    }
+}
+    
+function m_Draw_Health()
+{
+    for(i=0;i<this.health;i++)
+    {
+        this.pixelArr[(this.healthMax-1)-i].m_drawGrid();
+    }
+}
+
+function m_updateHealth(l_value) {this.health=l_value;}
+
+    
+    
+    
+//-----------------------------------------------------------SCORE-----------------------------------------------------
+    
+function C_SCOREBOARD(l_x,l_y,l_colour,l_ctx)
+{
+    this.x=l_x;
+    this.y=l_y;
+    this.colour=l_colour;
+    this.ctx=l_ctx;
+    this.m_Draw_Score=m_Draw_Score;
+    this.m_updateScore=m_updateScore;
+    this.score=0;
+}
+    
+function m_Draw_Score()
+{
+    this.ctx.save();
+    this.ctx.fillStyle=this.colour;
+    this.ctx.font="20px serif";
+    this.ctx.fillText(`SCORE : `+this.score,this.x,this.y);
+    this.ctx.restore();
+}
+function m_updateScore(l_score) {this.score=l_score;}
+
+    
+    
+    
+//-------------------------ALIEN_TYPE------------------------------------------------------------------------------------
+    
+function C_ALIEN_TYPE(l_c,l_r,l_tag,l_bitmap1,l_bitmap2,l_colour,l_pixelWidth,l_smooth)
+{
+    this.colour=l_colour;
+    this.bitmap1=l_bitmap1;
+    this.bitmap2=l_bitmap2;
+    this.tag=l_tag;
+    this.coloumnCount=l_c;
+    this.rowCount=l_r;
+    this.pixWidth=l_pixelWidth;
+    this.smooth=l_smooth;
+}
+
+    var g_previousY;
+    
+function f_gameController()
+{     
+    for(i=0;i<ALIEN_ATTACK.bulletArr.length;i++)
+    {      
+        if(!ALIEN_ATTACK.bulletArr[i].isActive) {continue;}
+        
+        for(k=0;k<g_Bunker_Array.length;k++)
+        {                    
+                for(l=0;l<g_Bunker_Array[k].pixelArr.length;l++)
+                {
+                    if(!g_Bunker_Array[k].pixelArr[l].isActive) {continue;}
+                    
+                   if(f_collisionDetector(ALIEN_ATTACK.bulletArr[i],g_Bunker_Array[k].pixelArr[l]))
+                   {
+                        ALIEN_ATTACK.bulletArr[i].isActive=false;
+                        f_collisionHandler(g_Bunker_Array[k].pixelArr[l]);
+                        break;
+            
+                   } 
+                }
+        }
+        
+        if(!g_Spaceship_Destroyed&&f_collisionDetector(ALIEN_ATTACK.bulletArr[i],SPACESHIP_PLAYER))
+        {   
+            ALIEN_ATTACK.bulletArr[i].isActive=false;
+            f_collisionHandler(SPACESHIP_PLAYER);
+        }
+    }
+    for(i=0;i<SPACESHIP_PLAYER.BulletArr.length;i++)
+    {              
+        if(SPACESHIP_PLAYER.BulletArr[i].isActive)
+        {
+            if(f_collisionDetector(SPACESHIP_PLAYER.BulletArr[i],motherShip.enemyArr[0]))
+            {
+                SPACESHIP_PLAYER.BulletArr[i].isActive=false;
+                f_collisionHandler(motherShip.enemyArr[0])
+                break;
+            }
+            for(k=0;k<g_Bunker_Array.length;k++)
+            {
+                for(l=0;l<g_Bunker_Array[k].pixelArr.length;l++)
+                {
+                    if(!g_Bunker_Array[k].pixelArr[l].isActive) {continue;}
+                    
+                   if(f_collisionDetector(SPACESHIP_PLAYER.BulletArr[i],g_Bunker_Array[k].pixelArr[l]))
+                   {
+                        SPACESHIP_PLAYER.BulletArr[i].isActive=false;
+                        f_collisionHandler(g_Bunker_Array[k].pixelArr[l]);
+                        break;
+            
+                   } 
+                }
+            }
+                       
+            for(j=0;j<ALIEN_SET_1.coloumnCount*ALIEN_SET_1.rowCount;j++)
+            {
+                if(ALIEN_SET_3.enemyArr[j].isActive)
+                {
+                  if(  f_collisionDetector(SPACESHIP_PLAYER.BulletArr[i],ALIEN_SET_3.enemyArr[j]))
+                  {
+                        SPACESHIP_PLAYER.BulletArr[i].isActive=false;
+                        f_collisionHandler(ALIEN_SET_3.enemyArr[j])  
+                      
+                  }
+                }
+                if(ALIEN_SET_2.enemyArr[j].isActive){
+                  if(  f_collisionDetector(SPACESHIP_PLAYER.BulletArr[i],ALIEN_SET_2.enemyArr[j]))
+                  {
+                      SPACESHIP_PLAYER.BulletArr[i].isActive=false;
+                        f_collisionHandler(ALIEN_SET_2.enemyArr[j])  
+                        
+                  }
+                }
+                if(ALIEN_SET_1.enemyArr[j].isActive)
+                {
+                  if(  f_collisionDetector(SPACESHIP_PLAYER.BulletArr[i],ALIEN_SET_1.enemyArr[j]))
+                  {
+                      SPACESHIP_PLAYER.BulletArr[i].isActive=false;
+                        f_collisionHandler(ALIEN_SET_1.enemyArr[j])  
+                     
+                  }
+                }
+            }
+            
+            for(j=0;j<g_Aliens_On_Border.length;j++)
+            {          
+                
+                if(!g_Spaceship_Destroyed&&g_Aliens_On_Border[j].isActive&&f_collisionDetector(SPACESHIP_PLAYER.BulletArr[i],g_Aliens_On_Border[j]))
+                {
+                    SPACESHIP_PLAYER.BulletArr[i].isActive=false;
+                    f_collisionHandler(g_Aliens_On_Border[j]);
+                    break;
+                }
+            }
+        }
+    }
+    
+    for(i=0;i<g_Aliens_On_Border.length;i++)
+    {                          
+        if(!g_Aliens_On_Border[i].isActive) {continue;}
+        
+        if(f_collisionDetector(g_Aliens_On_Border[i],SPACESHIP_PLAYER))     
+        {
+            f_collisionHandler(g_Aliens_On_Border[i]);
+            f_collisionHandler(SPACESHIP_PLAYER);
+        }
+        
+        for(k=0;k<g_Bunker_Array.length;k++)
+        {                            
+                for(l=0;l<g_Bunker_Array[k].pixelArr.length;l++)
+                {
+                    if(!g_Bunker_Array[k].pixelArr[l].isActive) {continue;}
+                    
+                   if(f_collisionDetector(g_Aliens_On_Border[i],g_Bunker_Array[k].pixelArr[l]))
+                   {
+                        g_Bunker_Array[k].pixelArr[l].isActive=false;
+                        break;
+                   } 
+                }
+        }
+        
+        if(g_Aliens_On_Border[i].y>border.y)
+        {
+            g_Game_Over_Boolean=true;
+            g_Framerate=0;
+        }
+    }
+    
+    if(g_Mothership_Active_Boolean)
+    {
+        motherShip.moveRight=true;
+        if(motherShip.x>=g_Canvas.width+20)
+        {
+            motherShip.x=0;
+            motherShip.enemyArr[0].m_moveGrid(0,"nill");
+        }
+    }
+    
+    
+    
+    
+    
+//----------------------------------------------------ALIEN_SET_MOVEMENT-----------------------------------------------------------
+    
+    g_counter++;
+    if(g_counter>=g_Alien_Speed)
+    {
+        f_moveEnemies(g_Current_Direction_Of_Alien);
+        g_counter=0;
+    }
+    if(g_Current_Direction_Of_Alien=="r"&&ALIEN_SET_1.x+ALIEN_SET_1.crntColoumnCount*ALIEN_SET_1.type.coloumnCount*g_Width_Of_Pixel+g_Alien_Gap*ALIEN_SET_1.crntColoumnCount>=g_Canvas.width)
+    {
+        g_previousY=ALIEN_SET_1.y;
+        g_Current_Direction_Of_Alien="d";
+        g_Next_Direction_Of_Alien="l";
+    }
+    
+    if(g_Current_Direction_Of_Alien=="d"&&((ALIEN_SET_1.type.rowCount*g_Width_Of_Pixel)/2)<(ALIEN_SET_1.y-g_previousY))
+    {
+        g_Current_Direction_Of_Alien=g_Next_Direction_Of_Alien;
+    }
+    
+    if(g_Current_Direction_Of_Alien=="l"&&ALIEN_SET_1.crntX-g_Alien_Move_Speed<=g_Width_Of_Pixel)
+    {
+        g_previousY=ALIEN_SET_1.y;
+        g_Next_Direction_Of_Alien="r";
+        g_Current_Direction_Of_Alien="d";
+    }
+    
+    
+    
+    
+//---------------------------------CHECK_ALIEN_POSITION_RELATED_TO_BOTTOM_BORDER-----------------------------------------------------
+    
+    if(!g_Aliens_At_Edge) {f_updateEdgeEnemies();}
+    
+    if(g_Spaceship_Destroyed)
+    {
+        if(g_Spaceship_Lives<0)
+        {
+            g_Game_Over_Boolean=true;
+            g_Framerate=0; 
+        }
+        f_playerDeath();
+    }
+}
+    
+    
+    
+    
+//------------------------------------UPDATE_ALIEN_ENEMY_EDGE_POSITION---------------------------------------------------------------
+    
+function f_updateEdgeEnemies(l_id,l_setId)
+{
+    var l_length=g_Alien_Set_Array[0].enemyArr.length;
+    var l_objFound=false;
+    for(var k=0;k<g_Aliens_On_Border.length;k++)
+    {
+        for(var i=g_Alien_Set_Array.length-1;i>-1;i--)
+        {
+            if(!g_Alien_Set_Array[i].isActive) {continue;}
+            
+            if(g_Alien_Set_Array[i].enemyArr[k+g_Alien_Set_Array[i].coloumnCount].isActive)
+            {
+                g_Aliens_On_Border[k]=g_Alien_Set_Array[i].enemyArr[k+g_Alien_Set_Array[i].coloumnCount]
+                l_objectFound=true;
+                break;
+            }
+            
+            else if(g_Alien_Set_Array[i].enemyArr[k].isActive)
+            {
+                g_Aliens_On_Border[k]=g_Alien_Set_Array[i].enemyArr[k]
+                l_objectFound=true;
+                break;
+            }
+            
+            else if(i==0)
+            {
+                g_Aliens_On_Border[k]=g_Alien_Set_Array[i].enemyArr[k];
+            }
+            else {l_objFound=false;}
+            
+        }
+    }
+    
+}
+    
+function f_updateEnemySet()
+{
+    var l_enemyExist=false;
+    for(var i=0;i<g_Alien_Set_Array.length;i++)
+    {
+            if(g_Alien_Set_Array[i].isActive)
+            {
+                l_enemyExist=false;
+                for(var j=0;j<g_Alien_Set_Array[i].enemyArr.length;j++)
+                {
+                    if(g_Alien_Set_Array[i].id==2){
+}
+                    if( g_Alien_Set_Array[i].enemyArr[j].isActive)
+                    {
+                       l_enemyExist=true;
+                       break;
+                    }
+                }
+                    if(!l_enemyExist)
+                    {
+                        g_Alien_Set_Array[i].isActive=false;
+                        console.log("deactivated set"+g_Alien_Set_Array[i].id);
+                        l_enemyExist=true;
+                    }
+            }
+    }
+}
+    
+
+function f_collisionDetector(l_obj1,l_obj2)
+{
+   if(!l_obj1.isActive||!l_obj2.isActive) {return;}
+    
+    if(l_obj1.x<l_obj2.x+l_obj2.coloumnCount*l_obj2.pixWidth&&l_obj1.x+l_obj1.coloumnCount*l_obj1.pixWidth>l_obj2.x)
+    {
+            if(l_obj1.y<l_obj2.y+l_obj2.rowCount*l_obj2.pixWidth&&l_obj1.y+l_obj1.rowCount*l_obj1.pixWidth>l_obj2.y) {return true;}
+    }
+}
+    
+    
+    
+    
+    
+//------------------------------CHECK_RESPAWN_SPACESHIP------------------------------------------------------------------------------
+    
+function f_playerDeath()
+{
+    if(g_Spaceship_Destroyed)
+    {
+        if(g_Respawn_Timer>0)
+            {
+             g_Respawn_Timer--;
+             SPACESHIP_PLAYER.isActive=false
+            }
+        else
+            {
+              healthBar.m_updateHealth(g_Spaceship_Lives);
+              SPACESHIP_PLAYER.x=SPACESHIP_PLAYER.spawnX;
+              SPACESHIP_PLAYER.pixelGrid.x=SPACESHIP_PLAYER.spawnX;
+              SPACESHIP_PLAYER.pixelGrid.m_moveGrid(SPACESHIP_PLAYER.spawnX,"nill");
+              g_Respawn_Timer=g_Respawn_Time;
+              g_Spaceship_Destroyed=false;
+              SPACESHIP_PLAYER.pixelGrid.isActive=true;
+              SPACESHIP_PLAYER.isActive=true;
+            }
+    }
+}
+    
+function f_collisionHandler(l_obj)
+{
+   switch(l_obj.tag)
+   {
+       case "aliens":
+        l_obj.isActive=false;
+        f_updateEdgeEnemies(l_obj.id,l_obj.parentId);
+        f_updateEnemySet();
+        g_Score+=10;
+        scoreBoard.m_updateScore(g_Score);
+        g_Alien_Speed-=.2;
+        break;
+           
+       case "motherShip":
+        l_obj.isActive=false;
+        g_Mothership_Active_Boolean=false; 
+        g_Score+=50;
+        scoreBoard.m_updateScore(g_Score);
+        break;
+           
+       case "bunker":
+        g_Bunker_Array[l_obj.parentId].m_destroyBunker(l_obj.id);  
+        break;
+           
+       case "player":
+           g_Spaceship_Destroyed=true;
+           g_Spaceship_Lives--;
+           break;
+   }
+    
+}
+    
+    
+    
+    
+    
+//----------------------------------------------MOVE_ALIEN_SET---------------------------------------------------------------
+    
+function f_moveEnemies(l_d)
+{
+
+    switch(l_d)
+    {
+        case "l":
+            ALIEN_SET_1.moveLeft=true;
+            ALIEN_SET_2.moveLeft=true;
+            ALIEN_SET_3.moveLeft=true;
+            break;
+        case "r":
+            ALIEN_SET_1.moveRight=true;
+            ALIEN_SET_2.moveRight=true;
+            ALIEN_SET_3.moveRight=true;
+            break;
+        case "d":
+            ALIEN_SET_1.moveDown=true;
+            ALIEN_SET_2.moveDown=true;
+            ALIEN_SET_3.moveDown=true;
+            break;
+            
+    }
+}
+    
+    
+    
+    
+//---------------------------------------------------DRAW_ALL_OBJECTS----------------------------------------------------
+    
+function f_drawObjects()
+{
+    SPACESHIP_PLAYER.m_drawShip();
+    ALIEN_SET_1.m_Draw_Aliens();
+    ALIEN_SET_2.m_Draw_Aliens();
+    ALIEN_SET_3.m_Draw_Aliens();
+    motherShip.m_Draw_Aliens();
+    border.m_Draw_Border();
+    BORDER.m_Draw_Border();
+    for(var i=0;i<g_Bunker_Array.length;i++)
+    {
+        g_Bunker_Array[i].m_drawBunker();
+        if(i<ALIEN_ATTACK.bulletArr.length)
+        {
+          ALIEN_ATTACK.bulletArr[i].m_drawBullet();
+        }
+   
+    }
+    
+    healthBar.m_Draw_Health();
+    scoreBoard.m_Draw_Score();
+}
+    
+    
+    
+    
+//---------------------------------------------------RUN_ALL_OBJECTS----------------------------------------------------
+    
+function f_runObjects()
+{
+    SPACESHIP_PLAYER.m_Run_Spaceship();
+    ALIEN_SET_1.m_Run_Aliens();
+    ALIEN_SET_2.m_Run_Aliens();
+    ALIEN_SET_3.m_Run_Aliens();
+    motherShip.m_Run_Aliens();
+    ALIEN_ATTACK.m_Run_Weapons();
+}
+    
+    
+    
+//---------------------------------------------------INITIALIZE_ALL_OBJECTS----------------------------------------------------
+    
+function f_initialiseObjects()
+{
+    SPACESHIP_PLAYER.m_initialiseShip();
+    ALIEN_SET_1.m_initialiseEnemies();
+    ALIEN_SET_2.m_initialiseEnemies();
+    ALIEN_SET_3.m_initialiseEnemies();
+    motherShip.m_initialiseEnemies();
+    motherShip.enemyArr[0].tag="motherShip";
+    for(var k=0;k<g_Bunker_Array.length;k++)
+    {
+        g_Bunker_Array[k].m_initialiseBunker();
+    }
+    g_Alien_Set_Array=[ALIEN_SET_1,ALIEN_SET_2,ALIEN_SET_3];
+    g_Alien_Set_Array[0].isTopRow=true;
+    g_Aliens_At_Edge=false;
+    f_updateEdgeEnemies();
+    ALIEN_ATTACK.m_initialiseWeaponSystem();
+    healthBar.m_initialiseHealth();
+}
+
+function f_fillObjects()
+{
+    for(var i=0;i<g_Bunker_Array.length;i++)
+    {
+        g_Bunker_Array[i]=new c_bunker(10+i*g_Canvas.width/8,g_Canvas.height-150,5,5,"#e0e6ff",g_Bunker_Bitmap_Before_Damage,g_Bunker_Bitmap_After_Damage,g_Width_Of_Pixel,g_ctx,i)
+    }
+}
+
+document.addEventListener("keydown",f_keyDown);
+document.addEventListener("keyup",f_keyUp);
+    
+function f_keyDown(e)
+{
+    switch(e.keyCode)
+    {
+    case 37:
+        g_Key_Pressed[0]=true;
+        break;
+    case 39:    
+        g_Key_Pressed[1]=true;
+        break;
+    case 32:
+        g_Key_Pressed[2]=true;
+        break;
+        case 83:
+        g_menuData[0]=0;
+        break;
+
+        case 80:
+        g_menuData[0]=1;
+        break;
+        case 82:
+        g_menuData[3]=1;
+        break;
+    }  
+}
+    
+function f_keyUp(e)
+{
+    switch(e.keyCode)
+    {
+    case 37:
+        g_Key_Pressed[0]=false;
+        break;
+    case 39:    
+        g_Key_Pressed[1]=false;
+        break;
+    case 32:
+        g_Key_Pressed[2]=false;
+        break;
+    }  
+}
+
+function m_drawPixel()
+{
+    if(this.isVisible)
+    {
+    this.ctx.save();
+    this.ctx.fillStyle=this.colour;
+    if(this.glow)
+    {
+    this.shadowColor="BLACK";
+    this.ctx.shadowBlur=10;
+    }
+    this.ctx.fillRect(this.x,this.y,this.width,this.width);
+    this.ctx.restore();
+    }
+}
+    
+function f_Run_Game()
+{
+    if(!g_Game_Over_Boolean)
+   {
+        f_gameController();
+        f_runObjects();
+        f_clearCanvas();
+        f_drawBorder();
+        f_drawObjects();
+   }
+    else 
+   {
+        f_drawBorder();
+        BORDER.m_Draw_Border();
+   }
+}
+//------------------------------GAME_OVER-------------------------------------------------------------------------
+    
+    if(g_Framerate == 0)
+        {
+            g_ctx.font="80px serif";
+            g_ctx.fillText("GAME OVER");
+        }
+</script>
+</html>
